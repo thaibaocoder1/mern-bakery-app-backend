@@ -8,6 +8,7 @@ const RateService = require('@/services/RateService')
 const pagination = require('@/utils/pagination')
 const mongoose = require('mongoose')
 const MapResponseMessage = require('@/utils/response-message/vi-VN')
+const PlanService = require('@/services/PlanService')
 
 class OrderService {
   createBranchOrders = (orderGroupId, payload) => {
@@ -294,9 +295,14 @@ class OrderService {
             material.materialId.toString()
         )
     )
-
+    const allCakesInOrder = cakes.some((cake) =>
+      uniqueOrderItems.some(
+        (orderItem) =>
+          orderItem.cakeId._id.toString() === cake.cakeId.toString()
+      )
+    )
     if (orderType === 'customerOrder') {
-      if (cakes.length !== 0) {
+      if (cakes.length !== 0 && allCakesInOrder) {
         for (let item of nonVariantItems) {
           cakes.forEach((branchCake, index) => {
             if (
@@ -353,7 +359,8 @@ class OrderService {
             if (recipeMaterial) {
               branchMaterial = this.updateMaterialInventory(
                 branchMaterial,
-                recipeMaterial
+                recipeMaterial,
+                false
               )
             }
             return branchMaterial
@@ -564,8 +571,22 @@ class OrderService {
       } else if (freshOrder?.orderGroupId?.paymentStatus === 'cashOnDelivery') {
         switch (orderStatus) {
           case 'ready':
-          case 'shipping':
           case 'queue':
+            freshOrder.orderStatus = orderStatus
+            break
+          case 'shipping':
+            const orderInPlan = await PlanService.checkExistedOrderInPlan(
+              orderId
+            )
+            if (orderInPlan) {
+              await this.subtractMaterials(
+                freshOrder.branchId,
+                freshOrder.orderItems,
+                freshOrder?.orderType,
+                session,
+                next
+              )
+            }
             freshOrder.orderStatus = orderStatus
             break
           case 'completed':

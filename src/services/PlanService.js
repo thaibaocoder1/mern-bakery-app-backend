@@ -378,6 +378,8 @@ class PlanService {
           )
           if (branchCake) {
             await this.processItemWithVariants(item, branchCake, planDetails)
+          } else {
+            await this.processItemWithVariants(item, branchCake, planDetails)
           }
         }
       } else {
@@ -388,7 +390,6 @@ class PlanService {
           await this.handleNoCakeWithVariants(item, planDetails)
         }
       }
-
       return planDetails
     } catch (error) {
       throw new Error(error)
@@ -419,7 +420,17 @@ class PlanService {
             type: 'returnOrder',
           },
     ]
+    console.log('quantity', branchMaterial)
     return branchMaterial
+  }
+  checkExistedOrderInPlan = async (orderId) => {
+    try {
+      return await PlanModel.findOne({
+        orderId: { $in: [orderId] },
+      })
+    } catch (error) {
+      throw new Error(error)
+    }
   }
 
   getAll = async (queryParams) => {
@@ -445,6 +456,30 @@ class PlanService {
       throw new Error(error)
     }
   }
+  getAllPlanForBranch = async (queryParams) => {
+    try {
+      const {
+        page,
+        limit,
+        noPagination,
+        paginatedData,
+        totalPages,
+        totalRecords,
+      } = await pagination(PlanModel, queryParams)
+
+      return {
+        page,
+        limit,
+        noPagination,
+        paginatedData,
+        totalPages,
+        totalRecords,
+      }
+    } catch (error) {
+      throw new Error(error)
+    }
+  }
+
   getById = async (planId) => {
     try {
       const freshPlan = await PlanModel.findById(planId).select('-__v')
@@ -511,7 +546,10 @@ class PlanService {
       if (!validStatus.includes(planStatus)) {
         throw new Error(`Plan status is invalid: ${planStatus}`)
       }
-      if (totalMaterials && totalMaterials.length !== 0) {
+      if (
+        planStatus === 'in_progress' ||
+        (totalMaterials && totalMaterials.length !== 0)
+      ) {
         const materialMap = new Map(
           totalMaterials.map((material) => [
             material.materialId._id.toString(),

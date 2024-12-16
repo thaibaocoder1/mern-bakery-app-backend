@@ -9,132 +9,132 @@ const { staffTokenMiddleware } = require('@/middlewares/token-middlewares')
 const { requiredRole } = require('@/middlewares/role-validate')
 
 router
-	.route('/')
-	.get(BranchController.getAll)
-	.post(
-		validateRequiredParams(['branchConfig', 'businessProducts']),
-		BranchController.createBranch
-	)
+  .route('/')
+  .get(BranchController.getAll)
+  .post(
+    validateRequiredParams(['branchConfig', 'businessProducts']),
+    BranchController.createBranch
+  )
 
 router.get('/inventory/materials', BranchController.getBranchHasMaterial)
-
+router.get('/:id/plans', BranchController.getAllPlanForBranch)
 router.get('/:id/business-products', BranchController.getBusinessProducts)
 router.get(
-	'/:id/suppliers',
-	staffTokenMiddleware,
-	BranchController.getListSupplier
+  '/:id/suppliers',
+  staffTokenMiddleware,
+  BranchController.getListSupplier
 )
 router.patch(
-	'/:id/business-products',
-	validateOptionalParams(['businessProducts']),
-	BranchController.updateBusinessProducts
+  '/:id/business-products',
+  validateOptionalParams(['businessProducts']),
+  BranchController.updateBusinessProducts
 )
 
 router.get(
-	'/:branchId/staffs',
-	staffTokenMiddleware,
-	requiredRole(1),
-	BranchController.getStaffOfBranch
+  '/:branchId/staffs',
+  staffTokenMiddleware,
+  requiredRole(1),
+  BranchController.getStaffOfBranch
 )
 
 router.get(
-	'/:id/vouchers',
-	// staffTokenMiddleware,
-	BranchController.getListVouchersOfBranch
+  '/:id/vouchers',
+  // staffTokenMiddleware,
+  BranchController.getListVouchersOfBranch
 )
 
 router.get('/:id/inventory', BranchController.getBranchInventory)
 router.patch(
-	'/:id/inventory/materials',
-	validateOptionalParams(['requestId']),
-	BranchController.updateBranchMaterialsInventory
+  '/:id/inventory/materials',
+  validateOptionalParams(['requestId']),
+  BranchController.updateBranchMaterialsInventory
 )
 
 router.patch(
-	'/:id/inventory/cakes',
-	validateOptionalParams(['orderId']),
-	BranchController.updateBranchCakesInventory
+  '/:id/inventory/cakes',
+  validateOptionalParams(['orderId']),
+  BranchController.updateBranchCakesInventory
 )
 router.get(
-	'/:id/orders',
-	staffTokenMiddleware,
-	BranchController.getBranchOrders
+  '/:id/orders',
+  staffTokenMiddleware,
+  BranchController.getBranchOrders
 )
 router.patch('/:id/visibility', BranchController.toggleVisibility)
 
 router
-	.route('/:id/import-requests')
-	.get(staffTokenMiddleware, BranchController.getImportRequests)
-	.post(
-		staffTokenMiddleware,
-		validateRequiredParams([
-			'supplierId',
-			'branchId',
-			'requestItems',
-			'requestTotalPrice',
-		]),
-		BranchController.createImportRequests
-	)
+  .route('/:id/import-requests')
+  .get(staffTokenMiddleware, BranchController.getImportRequests)
+  .post(
+    staffTokenMiddleware,
+    validateRequiredParams([
+      'supplierId',
+      'branchId',
+      'requestItems',
+      'requestTotalPrice',
+    ]),
+    BranchController.createImportRequests
+  )
 router
-	.route('/:id/import-requests/:requestId')
-	.patch(
-		staffTokenMiddleware,
-		requiredRole(0),
-		validateOptionalParams(['requestItems', 'requestTotalPrice']),
-		validateForbiddenParams([
-			'importDate',
-			'supplierId',
-			'branchId',
-			'isCancelled',
-			'cancelledReason',
-		]),
-		BranchController.updateImportRequests
-	)
+  .route('/:id/import-requests/:requestId')
+  .patch(
+    staffTokenMiddleware,
+    requiredRole(0),
+    validateOptionalParams(['requestItems', 'requestTotalPrice']),
+    validateForbiddenParams([
+      'importDate',
+      'supplierId',
+      'branchId',
+      'isCancelled',
+      'cancelledReason',
+    ]),
+    BranchController.updateImportRequests
+  )
 router
-	.route('/:id/import-requests/:requestId/cancel')
-	.patch(
-		staffTokenMiddleware,
-		requiredRole(1),
-		validateRequiredParams(['isCancelled', 'cancelledReason']),
-		BranchController.cancelImportRequests
-	)
+  .route('/:id/import-requests/:requestId/cancel')
+  .patch(
+    staffTokenMiddleware,
+    requiredRole(1),
+    validateRequiredParams(['isCancelled', 'cancelledReason']),
+    BranchController.cancelImportRequests
+  )
 
 router.patch(
-	'/:branchId/delete',
-	staffTokenMiddleware,
-	requiredRole(2),
-	BranchController.softDeleteBranch
+  '/:branchId/delete',
+  staffTokenMiddleware,
+  requiredRole(2),
+  BranchController.softDeleteBranch
 )
 router.patch(
-	'/:branchId/recover',
-	staffTokenMiddleware,
-	requiredRole(2),
-	BranchController.recoverBranch
+  '/:branchId/recover',
+  staffTokenMiddleware,
+  requiredRole(2),
+  BranchController.recoverBranch
 )
 
 router.patch(
-	'/:branchId/remove-materials',
-	validateRequiredParams(['materialId', 'removeWeight']),
-	staffTokenMiddleware,
-	requiredRole(1),
-	BranchController.removeExpiredMaterial
+  '/:branchId/remove-materials',
+  validateRequiredParams(['materialId', 'removeWeight']),
+  staffTokenMiddleware,
+  requiredRole(1),
+  BranchController.removeExpiredMaterial
 )
 
 router
-	.route('/:id')
-	.get(BranchController.getOne)
-	.patch(
-		validateOptionalParams([
-			'branchDisplayName',
-			'activeTime',
-			'branchType',
-			'branchAddress',
-			'branchContact',
-			'mapLink',
-		]),
-		validateForbiddenParams(['isActive']),
-		BranchController.updateInfomationBranch
-	)
-	.delete(BranchController.hardDeleteBranch)
+  .route('/:id')
+  .get(BranchController.getOne)
+  .patch(
+    validateOptionalParams([
+      'branchDisplayName',
+      'activeTime',
+      'branchType',
+      'branchAddress',
+      'branchContact',
+      'mapLink',
+    ]),
+    validateForbiddenParams(['isActive']),
+    BranchController.updateInfomationBranch
+  )
+  .delete(BranchController.hardDeleteBranch)
 
 module.exports = router

@@ -5,6 +5,7 @@ const SupplierService = require('@/services/SupplierService')
 const StaffService = require('@/services/StaffService')
 const MapResponseMessage = require('@/utils/response-message/vi-VN')
 const BranchModel = require('@/models/BranchModel')
+const PlanService = require('@/services/PlanService')
 
 class BranchController {
   /* [GET] */
@@ -39,6 +40,58 @@ class BranchController {
                   page
                 )
             : MapResponseMessage.successWithEmptyData('Chi nhánh'),
+        results: paginatedData,
+        metadata: {
+          currentPage: noPagination ? 1 : page,
+          limitPerPage: noPagination ? null : limit,
+          totalPages: noPagination ? 1 : totalPages,
+          totalRecords,
+          countRecords: paginatedData.length,
+        },
+      })
+    } catch (error) {
+      return next({
+        status: 500,
+        error,
+      })
+    }
+  }
+  getAllPlanForBranch = async (req, res, next) => {
+    try {
+      const {
+        page,
+        limit,
+        noPagination,
+        paginatedData,
+        totalPages,
+        totalRecords,
+      } = await PlanService.getAll({
+        ...req.query,
+        branchId: { $in: [req.params.id] },
+      })
+
+      if (!noPagination) {
+        if (req.query.page && page > totalPages) {
+          return next({
+            status: 404,
+            message: MapResponseMessage.notExistPage(totalPages),
+          })
+        }
+      }
+
+      res.status(200).json({
+        status: 'success',
+        message:
+          paginatedData.length > 0
+            ? noPagination
+              ? MapResponseMessage.successGetAllWithoutPagination(
+                  'Kế hoạch Chi nhánh'
+                )
+              : MapResponseMessage.successGetAllWithPagination(
+                  'Kế hoạch Chi nhánh',
+                  page
+                )
+            : MapResponseMessage.successWithEmptyData('Kế hoạch Chi nhánh'),
         results: paginatedData,
         metadata: {
           currentPage: noPagination ? 1 : page,
