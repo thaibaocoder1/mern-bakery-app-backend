@@ -8,10 +8,7 @@ const MongoDB = require('./configs/mongodb')
 const app = express()
 
 const corsOptions = {
-  origin: [
-    'https://mern-bakery-app-frontend.vercel.app',
-    'http://localhost:5173',
-  ],
+  origin: ['https://www.anbakery.shop', 'http://localhost:5173'],
   credentials: true,
 }
 
