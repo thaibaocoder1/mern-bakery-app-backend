@@ -1,164 +1,189 @@
-const AnalyticsService = require('../services/AnalyticsService');
+const AnalyticsService = require('../services/AnalyticsService')
 
 class AnalyticsController {
+  async getAllOrderAnalytics(req, res, next) {
+    return res.status(200).json({
+      results: await AnalyticsService.analysisRevenueInMonth(
+        new Date().getMonth(),
+        false
+      ),
+    })
+  }
 
-	async getAllOrderAnalytics(req, res, next) {
-		return res.status(200).json({
-			results: await AnalyticsService.analysisRevenueInMonth(new Date().getMonth(), false)
-		})
-	}
+  async getAnalysisDailyOrdersInMonth(req, res, next) {
+    try {
+      const { month, branchId } = req.query
 
-	async getAnalysisDailyOrdersInMonth(req, res, next) {
-		try {
+      const thisMonth = new Date().getMonth()
 
-			const { month } = req.query;
+      console.log(thisMonth)
 
-			const thisMonth = new Date().getMonth();
+      const allStatusData = await AnalyticsService.analysisOrderInMonth(
+        month ? month - 1 : thisMonth,
+        branchId
+      )
+      const completeStatusData = await AnalyticsService.analysisOrderInMonth(
+        month ? month - 1 : thisMonth,
+        branchId,
+        'completed'
+      )
+      const failureStatusData = await AnalyticsService.analysisOrderInMonth(
+        month ? month - 1 : thisMonth,
+        branchId,
+        {
+          $in: ['rejected', 'cancelled', 'returned'],
+        }
+      )
 
-			console.log(thisMonth);
+      const provisionalRevenueData =
+        await AnalyticsService.analysisRevenueInMonth(
+          month ? month - 1 : thisMonth,
+          false
+        )
+      const actualRevenueData = await AnalyticsService.analysisRevenueInMonth(
+        month ? month - 1 : thisMonth,
+        true
+      )
 
-			const allStatusData = await AnalyticsService.analysisOrderInMonth(month ? month - 1 : thisMonth);
-			const completeStatusData = await AnalyticsService.analysisOrderInMonth(month ? month - 1 : thisMonth, "completed");
-			const failureStatusData = await AnalyticsService.analysisOrderInMonth(month ? month - 1 : thisMonth, {
-				$in: ["rejected",
-					"cancelled",
-					"returned",]
-			});
+      return res.status(200).json({
+        status: 'success',
+        message: '',
+        results: {
+          allStatusData,
+          completeStatusData,
+          failureStatusData,
+          provisionalRevenueData,
+          actualRevenueData,
+        },
+      })
+    } catch (error) {
+      return next({
+        status: 500,
+        error,
+      })
+    }
+  }
 
-			const provisionalRevenueData = await AnalyticsService.analysisRevenueInMonth(month ? month - 1 : thisMonth, false);
-			const actualRevenueData = await AnalyticsService.analysisRevenueInMonth(month ? month - 1 : thisMonth, true);
+  async getOrdersInYear(req, res, next) {
+    try {
+      const { year } = req.query
 
-			return res.status(200).json({
-				status: "success",
-				message: "",
-				results: {
-					allStatusData,
-					completeStatusData,
-					failureStatusData,
-					provisionalRevenueData,
-					actualRevenueData
-				}
-			})
-		} catch (error) {
-			return next({
-				status: 500,
-				error,
-			})
-		}
-	}
+      const thisYear = new Date().getFullYear()
 
-	async getOrdersInYear(req, res, next) {
-		try {
+      const allStatusData = await AnalyticsService.analysisOrderInYear()
+      const completeStatusData = await AnalyticsService.analysisOrderInYear(
+        'completed'
+      )
+      const failureStatusData = await AnalyticsService.analysisOrderInYear({
+        $in: ['rejected', 'cancelled', 'returned'],
+      })
 
-			const { year } = req.query;
+      return res.status(200).json({
+        status: 'success',
+        message: '',
+        results: {
+          allStatusData,
+          completeStatusData,
+          failureStatusData,
+        },
+      })
+    } catch (error) {
+      return next({
+        status: 500,
+        error,
+      })
+    }
+  }
 
-			const thisYear = new Date().getFullYear();
+  async getNewCustomersInYear(req, res, next) {
+    try {
+      const { year } = req.query
 
-			const allStatusData = await AnalyticsService.analysisOrderInYear();
-			const completeStatusData = await AnalyticsService.analysisOrderInYear("completed");
-			const failureStatusData = await AnalyticsService.analysisOrderInYear({
-				$in: ["rejected",
-					"cancelled",
-					"returned",]
-			});
+      const thisYear = new Date().getFullYear()
 
-			return res.status(200).json({
-				status: "success",
-				message: "",
-				results: {
-					allStatusData,
-					completeStatusData,
-					failureStatusData,
-				}
-			})
-		} catch (error) {
-			return next({
-				status: 500,
-				error,
-			})
-		}
-	}
+      const allCustomersData = await AnalyticsService.analysisCustomersInYear()
 
-	async getNewCustomersInYear(req, res, next) {
-		try {
+      return res.status(200).json({
+        status: 'success',
+        message: '',
+        results: {
+          allCustomersData,
+        },
+      })
+    } catch (error) {
+      return next({
+        status: 500,
+        error,
+      })
+    }
+  }
 
-			const { year } = req.query;
+  async getDailyNewCustomersInMonth(req, res, next) {
+    try {
+      const { month } = req.query
 
-			const thisYear = new Date().getFullYear();
+      const thisMonth = new Date().getMonth()
 
-			const allCustomersData = await AnalyticsService.analysisCustomersInYear();
+      const allCustomersData = await AnalyticsService.analysisCustomersInMonth(
+        month ? month - 1 : thisMonth
+      )
 
-			return res.status(200).json({
-				status: "success",
-				message: "",
-				results: {
-					allCustomersData
-				}
-			})
-		} catch (error) {
-			return next({
-				status: 500,
-				error,
-			})
-		}
-	}
+      return res.status(200).json({
+        status: 'success',
+        message: '',
+        results: {
+          allCustomersData,
+        },
+      })
+    } catch (error) {
+      return next({
+        status: 500,
+        error,
+      })
+    }
+  }
 
-	async getDailyNewCustomersInMonth(req, res, next) {
-		try {
+  async getAnalytics(req, res, next) {
+    try {
+      const { branchId } = req.query
 
-			const { month } = req.query;
+      const currentMonth = new Date().getMonth() + 1
+      const currentDate = new Date().getDate()
+      const orderInYear = (
+        await AnalyticsService.analysisOrderInYear(branchId)
+      ).splice(0, currentMonth)
+      const revenueInYear = (
+        await AnalyticsService.analysisTotalRevenueInYear(false, branchId)
+      ).splice(0, currentMonth)
+      const customerInYear = (
+        await AnalyticsService.analysisCustomersInYear()
+      ).splice(0, currentMonth)
+      const orderInMonth = await AnalyticsService.analysisOrderInMonth(
+        currentMonth - 1,
+        branchId
+      )
+      const branchOrders = await AnalyticsService.analysisOrderByBranch(
+        currentMonth - 1
+      )
 
-			const thisMonth = new Date().getMonth();
-
-
-			const allCustomersData = await AnalyticsService.analysisCustomersInMonth(month ? month - 1 : thisMonth);
-
-			return res.status(200).json({
-				status: "success",
-				message: "",
-				results: {
-					allCustomersData,
-				}
-			})
-		} catch (error) {
-			return next({
-				status: 500,
-				error,
-			})
-		}
-	}
-
-	async getAnalytics(req, res, next) {
-		try {
-
-			const currentMonth = new Date().getMonth() + 1;
-			const currentDate = new Date().getDate();
-			const orderInYear = (await AnalyticsService.analysisOrderInYear()).splice(0, currentMonth);
-			const revenueInYear = (await AnalyticsService.analysisTotalRevenueInYear()).splice(0, currentMonth);
-			const customerInYear = (await AnalyticsService.analysisCustomersInYear()).splice(0, currentMonth);
-			const orderInMonth = (await AnalyticsService.analysisOrderInMonth(currentMonth - 1))
-			const branchOrders = await AnalyticsService.analysisOrderByBranch(currentMonth - 1);
-
-			return res.status(200).json({
-				status: "success",
-				message: "",
-				results: {
-					orderInYear,
-					revenueInYear,
-					customerInYear,
-					orderInMonth,
-					branchOrders
-
-				}
-			})
-
-		} catch (error) {
-			return next({
-				status: 500,
-				error,
-			})
-		}
-	}
+      return res.status(200).json({
+        status: 'success',
+        message: '',
+        results: {
+          orderInYear,
+          revenueInYear,
+          customerInYear,
+          orderInMonth,
+          branchOrders,
+        },
+      })
+    } catch (error) {
+      return next({
+        status: 500,
+        error,
+      })
+    }
+  }
 }
 
-module.exports = new AnalyticsController();
+module.exports = new AnalyticsController()
