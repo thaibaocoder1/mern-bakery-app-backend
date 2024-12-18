@@ -1,3 +1,4 @@
+const EmailService = require('@/services/EmailService')
 const ImportRequestService = require('@/services/ImportRequestService')
 
 const MapResponseMessage = require('@/utils/response-message/vi-VN')
@@ -75,7 +76,19 @@ class ImportRequestController {
   }
   updateRequestStatus = async (req, res, next) => {
     try {
-      const importRequest = await ImportRequestService.getById(req.params.id)
+      const importRequest = await ImportRequestService.getByIdWithCondition(
+        req.params.id,
+        {
+          populate: [
+            {
+              path: 'supplierId',
+            },
+            {
+              path: 'branchId',
+            },
+          ],
+        }
+      )
       if (!importRequest) {
         return next({
           status: 404,
@@ -92,26 +105,28 @@ class ImportRequestController {
           message: MapResponseMessage.successUpdate(
             'Trạng thái của Yêu cầu nhập hàng'
           ),
-          metadata: {
-            importRequestId: req.params.id,
-          },
           results: updatedImportRequest,
         })
       }
       const updatedImportRequest =
         await ImportRequestService.updateRequestStatus(
           req.params.id,
-          importRequest?.branchId,
+          importRequest?.branchId._id,
           req.body
         )
+      if (updatedImportRequest.requestStatus === 'confirmed') {
+        await EmailService.sendConfirmRequest(
+          importRequest.supplierId?.supplierContactPerson.email,
+          importRequest.supplierId?.supplierContactPerson.name,
+          importRequest.branchId?.branchConfig.branchDisplayName,
+          importRequest.branchId?._id
+        )
+      }
       return res.status(200).json({
         status: 'success',
         message: MapResponseMessage.successUpdate(
           'Trạng thái của Yêu cầu nhập hàng'
         ),
-        metadata: {
-          importRequestId: req.params.id,
-        },
         results: updatedImportRequest,
       })
     } catch (error) {

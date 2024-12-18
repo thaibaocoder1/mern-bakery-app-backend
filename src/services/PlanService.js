@@ -4,6 +4,7 @@ const OrderModel = require('@/models/OrderModel')
 const PlanModel = require('@/models/PlanModel')
 const RecipeModel = require('@/models/RecipeModel')
 const pagination = require('@/utils/pagination')
+const MapResponseMessage = require('@/utils/response-message/vi-VN')
 
 class PlanService {
   processItemWithVariants = async (item, branchCake, planDetails) => {
@@ -504,10 +505,19 @@ class PlanService {
       throw new Error(error)
     }
   }
+  getByName = async (planName) => {
+    return await PlanModel.findOne({ planName })
+  }
   create = async (planPayload) => {
     try {
-      const plan = await PlanModel.create(planPayload)
-      return plan
+      const existingPlan = await this.getByName(planPayload.planName)
+      if (!existingPlan) {
+        return await PlanModel.create(planPayload)
+      }
+      if (existingPlan.planType !== planPayload.planType) {
+        return await PlanModel.create(planPayload)
+      }
+      throw new Error(MapResponseMessage.conflictMessage('Kế hoạch'))
     } catch (error) {
       throw new Error(error)
     }

@@ -27,6 +27,18 @@ const apiRouter = require('./routes/apiRouter')
     console.log('Connecting to database...')
     await MongoDB.connect()
     app.use('/api', apiRouter)
+    app.use(function (err, req, res, next) {
+      const { error, status, message } = err
+
+      return res.status(status || 500).json({
+        status: status.toString().startsWith('4') ? 'failure' : 'error',
+        message: message
+          ? message
+          : error
+          ? `${error.name} - ${error.message}`
+          : '',
+      })
+    })
     app.listen(process.env.PORT, () =>
       console.log('Server is listening on port', process.env.PORT)
     )
@@ -35,16 +47,3 @@ const apiRouter = require('./routes/apiRouter')
     process.exit(0)
   }
 })()
-// error handler
-app.use(function (err, req, res, next) {
-  const { error, status, message } = err
-
-  return res.status(status || 500).json({
-    status: status.toString().startsWith('4') ? 'failure' : 'error',
-    message: message
-      ? message
-      : error
-      ? `${error.name} - ${error.message}`
-      : '',
-  })
-})

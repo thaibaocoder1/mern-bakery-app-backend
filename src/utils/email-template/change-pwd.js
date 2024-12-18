@@ -1,5 +1,5 @@
 const changePasswordTemplate = (code) =>
-	`
+  `
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
@@ -548,7 +548,7 @@ const changePasswordTemplate = (code) =>
                     <td class="content-cell" align="center">
                       <p class="f-fallback sub align-center">
                         hieutn.dev
-                        <br />FPT Polytechnic - Assignment Angular's Project
+                        <br />FPT Polytechnic - Assignment React's Project
                       </p>
                     </td>
                   </tr>
@@ -561,6 +561,6 @@ const changePasswordTemplate = (code) =>
     </table>
   </body>
 </html>
-`;
+`
 
-module.exports = changePasswordTemplate;
+module.exports = changePasswordTemplate
