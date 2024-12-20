@@ -398,6 +398,93 @@ class OrderService {
     freshBranch.branchInventory.cakes = cakes
     await freshBranch.save({ session })
   }
+  subtractCakesWithPlan = async (branchId, orderItems, orderType, session) => {
+    const freshBranch = await BranchModel.findById(branchId).session(session)
+
+    let cakes = freshBranch?.branchInventory?.cakes ?? []
+
+    const uniqueOrderItems = orderItems.reduce((acc, item) => {
+      const existingItem = acc.find((i) => {
+        const cakeIdMatch =
+          i.cakeId._id.toString() === item.cakeId._id.toString()
+        const variantsMatch =
+          i.selectedVariants.length === item.selectedVariants.length &&
+          i.selectedVariants.every(
+            (v, index) =>
+              v.variantKey.toString() ===
+                item.selectedVariants[index].variantKey.toString() &&
+              v.itemKey.toString() ===
+                item.selectedVariants[index].itemKey.toString()
+          )
+        return cakeIdMatch && variantsMatch
+      })
+      if (existingItem) {
+        existingItem.quantity += item.quantity
+      } else {
+        acc.push({
+          ...item,
+        })
+      }
+      return acc
+    }, [])
+    const nonVariantItems = uniqueOrderItems.filter(
+      (item) => item.selectedVariants.length === 0
+    )
+    const variantItems = uniqueOrderItems.filter(
+      (item) => item.selectedVariants.length > 0
+    )
+
+    const allCakesInOrder = cakes.some((cake) =>
+      uniqueOrderItems.some(
+        (orderItem) =>
+          orderItem.cakeId._id.toString() === cake.cakeId.toString()
+      )
+    )
+    if (orderType === 'customerOrder') {
+      if (cakes.length !== 0 && allCakesInOrder) {
+        for (let item of nonVariantItems) {
+          cakes.forEach((branchCake, index) => {
+            if (
+              branchCake.cakeId.toString() === item.cakeId._id.toString() &&
+              branchCake.selectedVariants.length === 0
+            ) {
+              cakes[index] = this.updateCakeInventory(
+                branchCake,
+                item.quantity,
+                false
+              )
+            }
+          })
+        }
+        for (let item of variantItems) {
+          const branchCakeIndex = cakes.findIndex(
+            (cake) =>
+              cake.cakeId.toString() === item.cakeId._id.toString() &&
+              cake.selectedVariants.length === item.selectedVariants.length &&
+              cake.selectedVariants.every((cakeVariant) =>
+                item.selectedVariants.some(
+                  (variant) =>
+                    variant.variantKey.toString() ===
+                      cakeVariant.variantKey.toString() &&
+                    variant.itemKey.toString() ===
+                      cakeVariant.itemKey.toString()
+                )
+              )
+          )
+          if (branchCakeIndex !== -1) {
+            cakes[branchCakeIndex] = this.updateCakeInventory(
+              cakes[branchCakeIndex],
+              item.quantity,
+              false
+            )
+          }
+        }
+      }
+    }
+
+    freshBranch.branchInventory.cakes = cakes
+    await freshBranch.save({ session })
+  }
   calculatePoints = (totalPrice, itemCount, hasPromotion) => {
     const SECRET_RATE = 0.01
     const SECRET_PROMOTION_BONUS = 50
@@ -579,12 +666,11 @@ class OrderService {
               orderId
             )
             if (orderInPlan) {
-              await this.subtractMaterials(
+              await this.subtractCakesWithPlan(
                 freshOrder.branchId,
                 freshOrder.orderItems,
                 freshOrder?.orderType,
-                session,
-                next
+                session
               )
             }
             freshOrder.orderStatus = orderStatus

@@ -352,16 +352,20 @@ class PlanService {
       )
 
       if (branchInventoryCakes.length !== 0) {
+        const branchCakeMap = new Map(
+          branchInventoryCakes.map((cake) => [cake.cakeId.toString(), cake])
+        )
+
         for (let item of nonVariantItems) {
-          for (let branchCake of branchInventoryCakes) {
-            if (
-              branchCake.cakeId.toString() === item.cakeId._id.toString() &&
-              branchCake.selectedVariants.length === 0
-            ) {
-              await this.processItemNonVariants(item, branchCake, planDetails)
-            }
+          const branchCake = branchCakeMap.get(item.cakeId._id.toString())
+
+          if (branchCake) {
+            await this.processItemNonVariants(item, branchCake, planDetails)
+          } else {
+            await this.handleNoCakeWithoutVariants(item, planDetails)
           }
         }
+
         for (let item of variantItems) {
           const branchCake = branchInventoryCakes.find(
             (cake) =>
@@ -377,10 +381,11 @@ class PlanService {
                 )
               )
           )
+
           if (branchCake) {
             await this.processItemWithVariants(item, branchCake, planDetails)
           } else {
-            await this.processItemWithVariants(item, branchCake, planDetails)
+            await this.handleNoCakeWithVariants(item, planDetails)
           }
         }
       } else {
@@ -391,6 +396,7 @@ class PlanService {
           await this.handleNoCakeWithVariants(item, planDetails)
         }
       }
+
       return planDetails
     } catch (error) {
       throw new Error(error)
@@ -530,6 +536,7 @@ class PlanService {
         orderItems,
         planDetails
       )
+
       return await PlanModel.findByIdAndUpdate(
         planId,
         {

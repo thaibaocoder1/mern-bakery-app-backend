@@ -271,6 +271,16 @@ class BranchService {
         throw new Error('Invalid time format')
       }
       const newBranch = await BranchModel.create(branchObj)
+      for (const item of branchObj?.businessProducts) {
+        await CakeModel.findByIdAndUpdate(
+          item,
+          { isHide: false },
+          {
+            new: true,
+            runValidators: false,
+          }
+        )
+      }
       return newBranch
     } catch (error) {
       throw new Error(error)
